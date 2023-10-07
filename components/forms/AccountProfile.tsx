@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { ChangeEvent,useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -19,6 +19,8 @@ import { userValidation } from '@/lib/validations/user';
 import Image from 'next/image'
 import { isBase64Image } from '@/lib/utils'
 import { useUploadThing } from '@/lib/uploadthings';
+import { updateUser } from '@/lib/actions/user.actions'
+import { usePathname, useRouter } from 'next/navigation'
 
 interface Props  {
     user : {
@@ -37,6 +39,9 @@ interface Props  {
 const AccountProfile = ({ user, btnTitle }: Props) => {
   const [files, setFiles] = useState<File[]>([])
   const { startUpload } = useUploadThing("media")
+  const  pathname  = usePathname()
+  const router = useRouter()
+
     const form = useForm({
         resolver: zodResolver(userValidation),
         defaultValues: {
@@ -100,11 +105,21 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
         if (imgRes && imgRes[0].fileUrl) {
           values.profile_photo = imgRes[0].fileUrl
         }
-        }
-        // Do something with the form values.
-        // ✅ This will be type-safe and validated.
-        console.log(values)
       }
+      await updateUser({
+        userId: user.id,
+        username: values.username,
+        name: values.name,
+        bio: values.bio,
+        image: values.profile_photo,
+        path: pathname
+      })
+      if (pathname === '/profile/edit') {
+        router.back()
+      } else {
+        router.push('/')
+      }
+    }
     return (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col justify-start gap-10">
@@ -134,6 +149,7 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
                 <FormControl className='flex-1 text-base-semibold text-gray-200'>
                   <Input type='file' accept='image/*' placeholder='Upload a Photo' className='account-form_image-input' onChange={(e) => handleImage(e, field.onChange)} />
                 </FormControl>
+                <FormMessage/>
               </FormItem>
             )}
                 />
@@ -148,6 +164,7 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
                 <FormControl>
                   <Input type='text'  placeholder='Enter your name' className='account-form_input no-focus' {...field} />
                 </FormControl>
+                <FormMessage/>
               </FormItem>
             )}
             />
@@ -162,6 +179,7 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
                 <FormControl>
                   <Input type='text'  placeholder='Enter your name' className='account-form_input no-focus' {...field} />
                 </FormControl>
+                <FormMessage/>
               </FormItem>
             )}
           />
@@ -176,6 +194,7 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
                 <FormControl>
                   <Textarea rows={10}  placeholder='Enter your name' className='account-form_input no-focus' {...field} />
                 </FormControl>
+                <FormMessage/>
               </FormItem>
             )}
           />
