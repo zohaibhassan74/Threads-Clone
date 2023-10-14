@@ -6,6 +6,7 @@ import { connectToDB } from "../mongoose"
 import search from './../../app/(root)/communities/page';
 import page from './../../app/(root)/thread/[id]/page';
 import { FilterQuery, SortOrder } from "mongoose";
+import Thread from "../models/thread.model";
 
 interface Params {
     userId: string
@@ -128,4 +129,28 @@ export async function fetchUsers({
   } catch (error: any) {
     throw new Error(`Failed to fetch users: ${error.message}`)
   }
+}
+
+export async function getActivity(userId: string) {
+    try {
+        connectToDB()
+        
+        // Find all the threads created by the user
+        const userThreads = await Thread.find({ author: userId })
+
+        // Find all the child threads created by the user(replies)
+        const childThreadId = await userThreads.reduce((acc, userThread) => {
+            return acc.concat(userThread.children)
+        }, [])
+
+        const replies = await Thread.find({ _id: { $in: childThreadId }, author: { $ne: userId } }).populate({
+            path: 'author',
+            model: 'User',
+            select: 'name image _id',
+        })
+
+        return replies
+    } catch (error: any) {
+        throw new Error(`Failed to fetch activity: ${error.message}`)
+    }
 }
