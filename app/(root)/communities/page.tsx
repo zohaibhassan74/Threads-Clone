@@ -1,4 +1,4 @@
-const search = async () => {
+const communities = async () => {
     return(
         <section>
             <h1 className='head-text mb-10'>Communities</h1>
@@ -6,4 +6,4 @@ const search = async () => {
     )
 }
 
-export default search
+export default communities
